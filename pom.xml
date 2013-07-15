@@ -49,4 +49,22 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<distributionManagement>
+		<repository>
+			<id>se</id>
+			<url>dav:https://webdav.labri.fr/vhosts/se.labri.fr/maven/</url>
+		</repository>
+	</distributionManagement>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/morandat/tima/issues</url>
+	</issueManagement>
+
+	<scm>
+		<url>http://github.com/morandat/tima</url>
+		<connection>scm:git:git://github.com/morandat/tima.git</connection>
+		<developerConnection>scm:git:git@github.com:morandat/tima.git</developerConnection>
+	</scm>
 </project>
