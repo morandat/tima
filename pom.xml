@@ -24,6 +24,17 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.5</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.wagon</groupId>
+            <artifactId>wagon-webdav</artifactId>
+            <version>1.0-beta-2</version>
+          </dependency>
+        </dependencies>
+      </plugin>
 		</plugins>
 	</build>
 	<dependencies>
@@ -59,11 +70,11 @@
 
 	<issueManagement>
 		<system>GitHub</system>
-		<url>https://github.com/morandat/tima/issues</url>
+		<url>https://github.com/morandat/tima/issues/</url>
 	</issueManagement>
 
 	<scm>
-		<url>http://github.com/morandat/tima</url>
+		<url>http://github.com/morandat/tima/</url>
 		<connection>scm:git:git://github.com/morandat/tima.git</connection>
 		<developerConnection>scm:git:git@github.com:morandat/tima.git</developerConnection>
 	</scm>
