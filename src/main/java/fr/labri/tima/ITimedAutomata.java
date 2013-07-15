@@ -1,4 +1,4 @@
-package fr.labri.timedautomata;
+package fr.labri.tima;
 
 import java.util.Collection;
 import java.util.List;

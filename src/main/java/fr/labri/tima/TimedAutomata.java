@@ -1,4 +1,4 @@
-package fr.labri.timedautomata;
+package fr.labri.tima;
 
 //import java.io.ByteArrayOutputStream;
 //import java.io.IOException;

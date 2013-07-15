@@ -1,9 +1,9 @@
-package fr.labri.timedautomata;
+package fr.labri.tima;
 
 import fr.labri.Utils;
-import fr.labri.timedautomata.ITimedAutomata.Action;
-import fr.labri.timedautomata.ITimedAutomata.Predicate;
-import fr.labri.timedautomata.ITimedAutomata.State;
+import fr.labri.tima.ITimedAutomata.Action;
+import fr.labri.tima.ITimedAutomata.Predicate;
+import fr.labri.tima.ITimedAutomata.State;
 
 public class DotRenderer<C> {
 	public final static String INFINITY_SYMBOL = "+oo"; // "\u221E" 

@@ -1,4 +1,4 @@
-package fr.labri.timedautomata;
+package fr.labri.tima;
 
 import java.awt.Dimension;
 
@@ -9,8 +9,8 @@ import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.visualization.BasicVisualizationServer;
-import fr.labri.timedautomata.ITimedAutomata.Predicate;
-import fr.labri.timedautomata.ITimedAutomata.State;
+import fr.labri.tima.ITimedAutomata.Predicate;
+import fr.labri.tima.ITimedAutomata.State;
 
 public class AutomataViewer<C> {
 	public static JFrame viewAsFrame(ITimedAutomata<?> automata) {

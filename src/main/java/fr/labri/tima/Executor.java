@@ -1,4 +1,4 @@
-package fr.labri.timedautomata;
+package fr.labri.tima;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -9,8 +9,8 @@ import java.util.List;
 import javax.swing.AbstractListModel;
 import javax.swing.JList;
 
-import fr.labri.timedautomata.ITimedAutomata.ContextProvider;
-import fr.labri.timedautomata.ITimedAutomata.Cursor;
+import fr.labri.tima.ITimedAutomata.ContextProvider;
+import fr.labri.tima.ITimedAutomata.Cursor;
 
 public class Executor<C> implements ITimedAutomata.Executor<C> {
 	List<Cursor<C>> _cursors = new LinkedList<>();

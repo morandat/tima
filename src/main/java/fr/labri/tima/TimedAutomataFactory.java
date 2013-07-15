@@ -1,4 +1,4 @@
-package fr.labri.timedautomata;
+package fr.labri.tima;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,12 +16,12 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
 
 import fr.labri.AutoQualifiedClassLoader;
-import fr.labri.timedautomata.ITimedAutomata.Action;
-import fr.labri.timedautomata.ITimedAutomata.Executor;
-import fr.labri.timedautomata.ITimedAutomata.NodeFactory;
-import fr.labri.timedautomata.ITimedAutomata.Predicate;
-import fr.labri.timedautomata.ITimedAutomata.Spawner;
-import fr.labri.timedautomata.ITimedAutomata.State;
+import fr.labri.tima.ITimedAutomata.Action;
+import fr.labri.tima.ITimedAutomata.Executor;
+import fr.labri.tima.ITimedAutomata.NodeFactory;
+import fr.labri.tima.ITimedAutomata.Predicate;
+import fr.labri.tima.ITimedAutomata.Spawner;
+import fr.labri.tima.ITimedAutomata.State;
 
 public class TimedAutomataFactory<C> {
 	public static final String AUTOMATA_TAG = "timedautomata";

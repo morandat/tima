@@ -3,12 +3,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>fr.labri</groupId>
-	<artifactId>timedautomata</artifactId>
+	<artifactId>tima</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>timedautomata</name>
-	<url>http://se.labri.fr/starnet</url>
+	<name>tima</name>
+	<url>http://se.labri.fr/tima</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
