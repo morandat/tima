@@ -513,9 +513,10 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 	@Override
 	public State<C>[] getFollowers(State<C> src) {
 		List<Transition> t = _transitions.get(src);
+		int size = t == null ? 0 : t.size();
 		@SuppressWarnings("unchecked")
-		State<C>[] states = new State[t.size()];
-		for(int i = 0; i < t.size(); i ++)
+		State<C>[] states = new State[size];
+		for(int i = 0; i < size; i ++)
 			states[i] = t.get(i).state;
 		return states;
 	}
