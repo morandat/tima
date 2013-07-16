@@ -488,7 +488,7 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 //	}
 //
 	public String toString() {
-		return new DotRenderer<>(this).toDot("G");
+		return DotRenderer.toDot(this, "G");
 	}
 	
 	

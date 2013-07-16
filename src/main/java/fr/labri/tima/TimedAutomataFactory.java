@@ -17,6 +17,7 @@ import org.jdom2.input.sax.XMLReaderXSDFactory;
 
 import fr.labri.AutoQualifiedClassLoader;
 import fr.labri.tima.ITimedAutomata.Action;
+import fr.labri.tima.ITimedAutomata.ContextProvider;
 import fr.labri.tima.ITimedAutomata.Executor;
 import fr.labri.tima.ITimedAutomata.NodeFactory;
 import fr.labri.tima.ITimedAutomata.Predicate;
@@ -53,19 +54,21 @@ public class TimedAutomataFactory<C> {
 	public static final String TRANSITION_ATTR_TAG = "attr";
 	
 //	public static final String XMLNS="http://www.w3.org/namespace/";
-	public static final String XMLNS_XSI="http://www.w3.org/2001/XMLSchema-instance";
-	public static final String XSI_LOCATION="http://www.labri.fr/~fmoranda/xsd/ta.xsd";
+	public static final String XMLNS_XSI = "http://www.w3.org/2001/XMLSchema-instance";
+	public static final String XSI_LOCATION = "http://www.labri.fr/~fmoranda/xsd/ta.xsd";
 	
-	final NodeFactory<C> _factory;
+	private final NodeFactory<C> _factory;
 	
-	final Map<String, Action<C>> _actionMap = new HashMap<String, Action<C>>();
-	final Map<String, Predicate<C>> _predicateMap = new HashMap<String, Predicate<C>>();
+	private final Map<String, Action<C>> _actionMap = new HashMap<String, Action<C>>();
+	private final Map<String, Predicate<C>> _predicateMap = new HashMap<String, Predicate<C>>();
+	
+	private final List<ITimedAutomata<C>> _masters = new ArrayList<>();
 
 	public TimedAutomataFactory(NodeFactory<C> factory) {
 		_factory = factory;
 	}
 
-	final public Document parseXML(InputStream stream, boolean validate) throws JDOMException, IOException {
+	public Document parseXML(InputStream stream, boolean validate) throws JDOMException, IOException {
 		// FIXME if validate == true, it does not work :)
 		SAXBuilder sxb = new SAXBuilder(validate ? new XMLReaderXSDFactory(TimedAutomata.class.getResource("ta.xsd")) : null);
 
@@ -73,15 +76,15 @@ public class TimedAutomataFactory<C> {
 		return document;
 	}
 	
-	final public TimedAutomata<C> loadXML(InputStream stream) throws JDOMException, IOException {
+	public List<TimedAutomata<C>> loadXML(InputStream stream) throws JDOMException, IOException {
 		return loadXML(parseXML(stream, false));
 	}
 	
-	final public TimedAutomata<C> loadXML(InputStream stream, boolean validate) throws JDOMException, IOException {
+	public List<TimedAutomata<C>> loadXML(InputStream stream, boolean validate) throws JDOMException, IOException {
 		return loadXML(parseXML(stream, validate));
 	}
 	
-	final public TimedAutomata<C> loadXML(Document root) throws JDOMException, IOException {
+	public List<TimedAutomata<C>> loadXML(Document root) throws JDOMException, IOException {
 		Map<String, Element> autosMap = new HashMap<>();
 		Map<Element, TimedAutomata<C>> autos = new HashMap<>();
 
@@ -89,10 +92,28 @@ public class TimedAutomataFactory<C> {
 		for(Element auto: autosMap.values())
 			loadAutomata(auto, autosMap, autos);
 		
-		return autos.get(root.getRootElement());
+		List<TimedAutomata<C>> res = new ArrayList<>();
+		res.addAll(autos.values());
+		_masters.add(autos.get(root.getRootElement()));
+		
+		return res;
+	}
+
+	final public Executor<C> getExecutor(ContextProvider<C> provider) {
+		return getExecutor(provider, true);
+	}
+
+	public Executor<C> getExecutor(ContextProvider<C> provider, boolean compiled) {
+		Executor<C> exec = new fr.labri.tima.Executor<>(provider);
+		for(ITimedAutomata<C> master: _masters) {
+			if(compiled)
+				master = master.compile();
+			exec.start(master, null);
+		}
+		return exec;
 	}
 	
-	final private void resolveAutomataName(Element auto, Map<String, Element> autosMap, Map<Element, TimedAutomata<C>> autos) {
+	protected void resolveAutomataName(Element auto, Map<String, Element> autosMap, Map<Element, TimedAutomata<C>> autos) {
 		String name = auto.getAttributeValue(AUTOMATA_NAME_TAG);
 		
 		if(name == null)
@@ -108,7 +129,7 @@ public class TimedAutomataFactory<C> {
 			resolveAutomataName(sub, autosMap, autos);
 	}
 
-	final public ITimedAutomata<C> loadAutomata(Element auto, Map<String, Element> autosMap, Map<Element, TimedAutomata<C>> autos) throws JDOMException, IOException {
+	protected ITimedAutomata<C> loadAutomata(Element auto, Map<String, Element> autosMap, Map<Element, TimedAutomata<C>> autos) throws JDOMException, IOException {
 		
 		Map<String, Element> stateMap = new HashMap<String, Element>();
 		Map<Element, Element> spawnMap = new HashMap<Element, Element>();
@@ -124,7 +145,7 @@ public class TimedAutomataFactory<C> {
 		return cAuto;
 	}
 	
-	private void buildTransitions(TimedAutomata<C> auto, Map<Element, State<C>> stateMap, Map<Element, Element> transMap) {
+	protected void buildTransitions(TimedAutomata<C> auto, Map<Element, State<C>> stateMap, Map<Element, Element> transMap) {
 		for(Entry<Element, State<C>> entry: stateMap.entrySet()){
 			Element srcElt = entry.getKey();
 			State<C> src = entry.getValue();
@@ -148,7 +169,7 @@ public class TimedAutomataFactory<C> {
 		}
 	}
 
-	private void buildStates(TimedAutomata<C> auto, Map<String, Element> stateMap, Map<Element, State<C>> states, Map<Element, Element> spawnMap, Map<Element, TimedAutomata<C>> autos) {
+	protected void buildStates(TimedAutomata<C> auto, Map<String, Element> stateMap, Map<Element, State<C>> states, Map<Element, Element> spawnMap, Map<Element, TimedAutomata<C>> autos) {
 		for(Entry<String, Element> entry: stateMap.entrySet()){
 			boolean isTerm = false, isSpawn = false;
 			Element state = entry.getValue();
@@ -206,7 +227,7 @@ public class TimedAutomataFactory<C> {
 		}
 	}
 
-	State<C> newState(final String name, final ArrayList<Action<C>> actions, final ArrayList<Spawn> automatas, final int modifiers) {
+	protected State<C> newState(final String name, final ArrayList<Action<C>> actions, final ArrayList<Spawn> automatas, final int modifiers) {
 		return new State<C>() {
 			@Override
 			public String getName() {
@@ -230,7 +251,7 @@ public class TimedAutomataFactory<C> {
 
 			@Override
 			public void preAction(C context, ITimedAutomata.Executor<C> executor, String key) {
-				if((modifiers & ITimedAutomata.SPAWN) > 0)
+				if(hasModifier(ITimedAutomata.SPAWN, modifiers))
 					for (Spawn spawn: automatas)
 						spawn.start(executor, context, key);
 				
@@ -252,7 +273,7 @@ public class TimedAutomataFactory<C> {
 		};
 	}
 	
-	private Spawn newSpawnAction(Element source, Map<Element, Element> spawnMap, Map<Element, TimedAutomata<C>> autos) {
+	protected Spawn newSpawnAction(Element source, Map<Element, Element> spawnMap, Map<Element, TimedAutomata<C>> autos) {
 		String spawnerName = source.getAttributeValue(SPAWN_ACTION_TAG);
 		String spawnerAttr = source.getAttributeValue(SPAWN_ATTR_TAG);
 		// TODO write a getSpan Method
@@ -261,7 +282,7 @@ public class TimedAutomataFactory<C> {
 		return new Spawn(target, spawner);
 	}
 	
-	private void resolveTransitions(Element root, Map<String, Element> stateMap, Map<Element, Element> transMap) {
+	protected void resolveTransitions(Element root, Map<String, Element> stateMap, Map<Element, Element> transMap) {
 		for(Element state: root.getChildren(STATE_TAG)){
 			
 			boolean hasTimeout = false;
@@ -290,7 +311,7 @@ public class TimedAutomataFactory<C> {
 		}
 	}
 
-	private Element resolveStates(Element root, Map<String, Element> autos, Map<String, Element> stateMap, Map<Element, Element> spawnMap) throws JDOMException {
+	protected Element resolveStates(Element root, Map<String, Element> autos, Map<String, Element> stateMap, Map<Element, Element> spawnMap) throws JDOMException {
 		Element initial = null;
 		
 		for(Element state: root.getChildren(STATE_TAG)){
@@ -321,7 +342,7 @@ public class TimedAutomataFactory<C> {
 		return initial;
 	}
 	
-	public Action<C> getAction(final String type, final String attr) {
+	protected Action<C> getAction(final String type, final String attr) {
 		String name = type + ((attr == null ) ? "" : (":"+attr)); 
 		if(_actionMap.containsKey(name))
 			return _actionMap.get(name);
@@ -329,11 +350,12 @@ public class TimedAutomataFactory<C> {
 		_actionMap.put(name, act);
 		return act;
 	}
+	
 	public static final boolean hasModifier(int modifiers, int modifier) {
 		return (modifiers & modifier) > 0;
 	}
 	
-	public Predicate<C> getPredicate(String type, String attr) {
+	protected Predicate<C> getPredicate(String type, String attr) {
 		String name = type + ((attr == null ) ? "" : (":"+attr));
 		if(_predicateMap.containsKey(name))
 			return _predicateMap.get(name);
@@ -342,7 +364,7 @@ public class TimedAutomataFactory<C> {
 		return t;
 	}
 	
-	public int getModifierFromNode(Element state) {
+	protected int getModifierFromNode(Element state) {
 		String name = state.getAttributeValue(TimedAutomataFactory.STATE_NAME_TAG);
 		return ("true".equalsIgnoreCase(state.getAttributeValue(TimedAutomataFactory.STATE_URGENT_TAG)) ? ITimedAutomata.URGENT : 0)
 				| ("true".equalsIgnoreCase(state.getAttributeValue(TimedAutomataFactory.STATE_INITIAL_TAG)) ? ITimedAutomata.INITIAL : 0)
@@ -398,7 +420,7 @@ public class TimedAutomataFactory<C> {
 		};
 	}
 	
-	class Spawn { // Remove this class
+	protected class Spawn { // Remove this class
 		private ITimedAutomata<C> _auto;
 		private Spawner<C> _spawner;
 		

@@ -16,6 +16,8 @@ public interface ITimedAutomata<C> {
 	public int getTimeout(State<C> src, State<C> dst);
 	public Predicate<C> getPredicate(State<C> src, State<C> dst);
 
+	public ITimedAutomata<C> compile();
+	
 	public Cursor<C> start(ContextProvider<C> context, String key);
 
 	public interface NodeFactory<C> {
@@ -57,12 +59,11 @@ public interface ITimedAutomata<C> {
 	}
 	
 	public interface Executor<C> {
-		void start(ITimedAutomata<C> auto, String key);
-		void next();
+		Executor<C> start(ITimedAutomata<C> auto, String key);
+		boolean next();
 		
 		Collection<Cursor<C>> getCursors();
 	}
-	
 	
 	public interface Cursor<C> {
 		boolean next(Executor<C> executor);
@@ -110,7 +111,6 @@ public interface ITimedAutomata<C> {
 			return getType();
 		}
 	}
-
 
 	public class SpawnAdapter<C> implements Spawner<C> {
 		@Override

@@ -1,38 +1,72 @@
 package fr.labri.tima;
 
+import java.util.Collection;
+
 import fr.labri.Utils;
 import fr.labri.tima.ITimedAutomata.Action;
+import fr.labri.tima.ITimedAutomata.Cursor;
 import fr.labri.tima.ITimedAutomata.Predicate;
 import fr.labri.tima.ITimedAutomata.State;
 
-public class DotRenderer<C> {
-	public final static String INFINITY_SYMBOL = "+oo"; // "\u221E" 
-	public final ITimedAutomata<C> _auto;
-	public final State<C>[] _states;
-	public final int start = 0;
-	
-	public DotRenderer(ITimedAutomata<C> auto) {
-		_auto = auto;
-		_states = auto.getStates();
+public class DotRenderer {
+	public final static String INFINITY_SYMBOL = "+oo"; // "\u221E"
+
+	public static <C> String toDot(ITimedAutomata<C> auto) {
+		return toDot(auto, "G");
 	}
 	
-	public String toDot(String name) {
+	public static <C> String toDot(ITimedAutomata<C> auto, String name) {
 		StringBuilder b = new StringBuilder("digraph ").append(name).append(" {\nedge [splines=ortho];\n");
 		
-		for(State<C> state: _states) {
-			b.append(getNodeID(state)).append(" [").append(getStateDecoration(state)).append("];\n");
-			for(State<C> dst: _auto.getFollowers(state))
-				if(dst != null)
-					b.append(getNodeID(state)).append(" -> ").append(getNodeID(dst)).append(" [").append(getTransitionDecoration(state, dst)).append("];\n");
-		}
+		b.append(drawGraph(auto, ""));
 
 		return b.append("};").toString();
 	}
 
-	private String getTransitionDecoration(State<C> src, State<C> dst) {
+
+	public static <C> String toDot(Executor<C> exec, String name) {
+		StringBuilder b = new StringBuilder("digraph ").append(name).append(" {\nedge [splines=ortho];\n");
+		int i = 0;
+		
+		for(Cursor<C> cursor: exec.getCursors()) {
+			b.append("subgraph cluster_").append(Integer.toString(i)).append(" {\n");
+			b.append(drawGraph(cursor.getAutomata(), "_" + i ++));
+			b.append("}");
+		}
+
+		return b.append("};").toString();
+	}
+	
+	public static <C> String toDot(Collection<? extends ITimedAutomata<C>> autos, String name) {
+		StringBuilder b = new StringBuilder("digraph ").append(name).append(" {\nedge [splines=ortho];\n");
+		int i = 0;
+		
+		for(ITimedAutomata<C> auto: autos) {
+			b.append("subgraph cluster_").append(Integer.toString(i)).append(" {\n");
+			b.append(drawGraph(auto, "_" + i ++));
+			b.append("}");
+		}
+
+		return b.append("};").toString();
+	}
+	
+	public static <C> String drawGraph(ITimedAutomata<C> auto, String offset) {
 		StringBuilder b = new StringBuilder();
-		int timeout = _auto.getTimeout(src, dst);
-		Predicate<C> pred = _auto.getPredicate(src, dst);
+		State<C>[] states = auto.getStates();
+
+		for(State<C> state: states) {
+			b.append(getNodeID(state, states, offset)).append(" [").append(getStateDecoration(state)).append("];\n");
+			for(State<C> dst: auto.getFollowers(state))
+				if(dst != null)
+					b.append(getNodeID(state, states, offset)).append(" -> ").append(getNodeID(dst, states, offset)).append(" [").append(getTransitionDecoration(auto, state, dst)).append("];\n");
+		}
+		return b.toString();
+	}
+	
+	private static <C> String getTransitionDecoration(ITimedAutomata<C> auto, State<C> src, State<C> dst) {
+		StringBuilder b = new StringBuilder();
+		int timeout = auto.getTimeout(src, dst);
+		Predicate<C> pred = auto.getPredicate(src, dst);
 		
 		String sep = "";
 		if(pred != null) {
@@ -51,16 +85,16 @@ public class DotRenderer<C> {
 		return b.toString();
 	}
 
-	public String getNodeID(State<C> state) {
-		return "node" + Integer.toString(start + Utils.indexOf(state, _states));
+	public static <C> String getNodeID(State<C> state, State<C>[] states, String offset) {
+		return "node" + offset + Integer.toString(Utils.indexOf(state, states));
 	}
 	
-	public String getNodeName(State<C> state) {
-		String name = state.getName();
-		return (name == null) ? getNodeID(state) : name;
-	}
+//	public String getNodeName(State<C> state) {
+//		String name = state.getName();
+//		return (name == null) ? getNodeID(state) : name;
+//	}
 	
-	public String getStateDecoration(State<C> state) {
+	public static <C> String getStateDecoration(State<C> state) {
 		StringBuilder b = new StringBuilder();
 		b.append("shape=\"record\", label=\"{").append(state.getName()).append("|{");
 		String sep = "";

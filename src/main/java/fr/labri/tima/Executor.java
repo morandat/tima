@@ -23,14 +23,15 @@ public class Executor<C> implements ITimedAutomata.Executor<C> {
 	}
 	
 	@Override
-	public void start(ITimedAutomata<C> auto, String key) {
+	public Executor<C> start(ITimedAutomata<C> auto, String key) {
 		_cursors.add(auto.start(_context, key));
 		if(_viewer != null)
 			_viewer.update();
+		return this;
 	}
 
 	@Override
-	public void next() {
+	public boolean next() {
 		for(Iterator<Cursor<C>> it = _cursors.iterator(); it.hasNext() ;) {
 			Cursor<C> c = it.next();
 			if(c.next(this)) {
@@ -38,6 +39,7 @@ public class Executor<C> implements ITimedAutomata.Executor<C> {
 				_viewer.update();
 			}
 		}
+		return !_cursors.isEmpty();
 	}
 
 	@Override
