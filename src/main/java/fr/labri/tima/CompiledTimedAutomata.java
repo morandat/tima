@@ -43,22 +43,22 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 				boolean urgent = false, terminal = false; 
 				do {
 					int current = _current;
-					int target = current;
+					int target = -1;
 					C ctx = context.getContext();
 
-					if(_currentTimeout > 0 && _currentTimeout -- == 0)
-						target = _timeoutsTarget[_current];
+					if(_currentTimeout > 0 && -- _currentTimeout == 0) 
+						target = _timeoutsTarget[current];
 					else {
-						int[] trans = _transitionsPredicates[_current];
+						int[] trans = _transitionsPredicates[current];
 						int len = trans.length;
 						for(int i = 0; i < len; i ++)
 							if(_predicates[trans[i]].isValid(ctx, key)) {
-								target = _transitionsTarget[_current][i];
+								target = _transitionsTarget[current][i];
 								break;
 							}
 					}
-					if(target == current) {
-						_states[target].eachAction(ctx, executor, key);
+					if(target == -1) {
+						_states[current].eachAction(ctx, executor, key);
 					} else {
 						State<C> state = setState(target, executor, ctx);
 						urgent = (state.getModifier() & URGENT) > 0;

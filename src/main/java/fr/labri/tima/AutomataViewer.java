@@ -13,6 +13,7 @@ import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import fr.labri.tima.ITimedAutomata.Cursor;
+import fr.labri.tima.ITimedAutomata.Executor;
 import fr.labri.tima.ITimedAutomata.Predicate;
 import fr.labri.tima.ITimedAutomata.State;
 

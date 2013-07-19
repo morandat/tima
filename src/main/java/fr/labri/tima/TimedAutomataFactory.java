@@ -104,7 +104,7 @@ public class TimedAutomataFactory<C> {
 	}
 
 	public Executor<C> getExecutor(ContextProvider<C> provider, boolean compiled) {
-		Executor<C> exec = new fr.labri.tima.Executor<>(provider);
+		Executor<C> exec = new BasicExecutor<>(provider);
 		for(ITimedAutomata<C> master: _masters) {
 			if(compiled)
 				master = master.compile();
@@ -158,7 +158,10 @@ public class TimedAutomataFactory<C> {
 				String attr = trans.getAttributeValue(TRANSITION_ATTR_TAG);
 				int timeout = (timeoutval == null) ? TimedAutomata.INFINITY : Integer.parseInt(timeoutval);
 				
-				auto.addTransition(src, timeout, getPredicate(pred, attr), dest);
+				Predicate<C> predicate = getPredicate(pred, attr);
+				if(predicate == null)
+					throw new RuntimeException("Unable to create predicate : " + pred +"(" + attr+")");
+				auto.addTransition(src, timeout, predicate, dest);
 			}
 			
 			Element timeout = srcElt.getChild(TIMEOUT_TAG);

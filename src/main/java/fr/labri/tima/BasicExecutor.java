@@ -11,19 +11,20 @@ import javax.swing.JList;
 
 import fr.labri.tima.ITimedAutomata.ContextProvider;
 import fr.labri.tima.ITimedAutomata.Cursor;
+import fr.labri.tima.ITimedAutomata.Executor;
 
-public class Executor<C> implements ITimedAutomata.Executor<C> {
+public class BasicExecutor<C> implements Executor<C> {
 	List<Cursor<C>> _cursors = new LinkedList<>();
 	ContextProvider<C> _context;
 
 	TAViewer _viewer;
 	
-	public Executor(ContextProvider<C> context) {
+	public BasicExecutor(ContextProvider<C> context) {
 		_context = context;
 	}
 	
 	@Override
-	public Executor<C> start(ITimedAutomata<C> auto, String key) {
+	public BasicExecutor<C> start(ITimedAutomata<C> auto, String key) {
 		_cursors.add(auto.start(_context, key));
 		if(_viewer != null)
 			_viewer.update();

@@ -5,6 +5,7 @@ import java.util.Collection;
 import fr.labri.Utils;
 import fr.labri.tima.ITimedAutomata.Action;
 import fr.labri.tima.ITimedAutomata.Cursor;
+import fr.labri.tima.ITimedAutomata.Executor;
 import fr.labri.tima.ITimedAutomata.Predicate;
 import fr.labri.tima.ITimedAutomata.State;
 
