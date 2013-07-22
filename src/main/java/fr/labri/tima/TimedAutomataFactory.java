@@ -53,9 +53,8 @@ public class TimedAutomataFactory<C> {
 	public static final String TRANSITION_TIMEOUT_TAG = "timeout";
 	public static final String TRANSITION_ATTR_TAG = "attr";
 	
-//	public static final String XMLNS="http://www.w3.org/namespace/";
 	public static final String XMLNS_XSI = "http://www.w3.org/2001/XMLSchema-instance";
-	public static final String XSI_LOCATION = "http://www.labri.fr/~fmoranda/xsd/ta.xsd";
+	public static final String XSI_LOCATION = "http://www.labri.fr/~fmoranda/xsd/tima.xsd";
 	
 	private final NodeFactory<C> _factory;
 	
@@ -69,8 +68,7 @@ public class TimedAutomataFactory<C> {
 	}
 
 	public Document parseXML(InputStream stream, boolean validate) throws JDOMException, IOException {
-		// FIXME if validate == true, it does not work :)
-		SAXBuilder sxb = new SAXBuilder(validate ? new XMLReaderXSDFactory(TimedAutomata.class.getResource("ta.xsd")) : null);
+		SAXBuilder sxb = new SAXBuilder(validate ? new XMLReaderXSDFactory(TimedAutomata.class.getResource("tima.xsd")) : null);
 
 		Document document = sxb.build(stream);
 		return document;
@@ -203,9 +201,8 @@ public class TimedAutomataFactory<C> {
 			String dfltAct = state.getAttributeValue(ACTION_TAG);
 			if(dfltAct != null) {
 				Action<C> a = getAction(dfltAct, state.getAttributeValue(ACTION_ATTR_TAG));
-				if(a == null)
-					throw new RuntimeException("Unable to create default action : " + state.getAttributeValue(ACTION_NAME_TAG) +"(" + state.getAttributeValue(ACTION_ATTR_TAG)+")");
-				acts.add(a);
+				if(a != null)
+					acts.add(a);
 			} else if(state.getAttributeValue(ACTION_ATTR_TAG) != null)
 				throw new RuntimeException("Attribue without action in state: "+ entry.getKey());
 			
@@ -346,10 +343,13 @@ public class TimedAutomataFactory<C> {
 	}
 	
 	protected Action<C> getAction(final String type, final String attr) {
+		if(type == null) return null;
 		String name = type + ((attr == null ) ? "" : (":"+attr)); 
 		if(_actionMap.containsKey(name))
 			return _actionMap.get(name);
 		Action<C> act = _factory.newAction(type, attr);
+		if(act == null)
+			throw new RuntimeException("Unable to create default action : " + name);
 		_actionMap.put(name, act);
 		return act;
 	}
