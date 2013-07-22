@@ -35,8 +35,8 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 	@Override
 	public Cursor<C> start(final ContextProvider<C> context, final String key) {
 		return new Cursor<C>() {
-			int _current;
-			int _currentTimeout;
+			int _current = _initial;
+			int _currentTimeout = _timeouts[_initial];
 
 			@Override
 			final public boolean next(Executor<C> executor) {
