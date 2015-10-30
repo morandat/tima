@@ -8,7 +8,7 @@ import fr.labri.tima.ITimedAutomata.PredicateAdapter;
 import fr.labri.tima.ITimedAutomata.SpawnAdapter;
 import fr.labri.tima.ITimedAutomata.Spawner;
 
-class SimpleNodeFactory<C> implements NodeFactory<C> {
+public class SimpleNodeFactory<C> implements NodeFactory<C> {
 
 	public Predicate<C> newPredicate(final String name, String attr) {
 		return new PredicateAdapter<C>() {

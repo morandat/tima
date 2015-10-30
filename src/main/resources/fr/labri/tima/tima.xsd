@@ -1,4 +1,4 @@
-<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' xmlns="http://se.labri.fr/tima" elementFormDefault="qualified" targetNamespace="http://se.labri.fr/tima">
+<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' xmlns="http://se.labri.fr/tima" targetNamespace="http://se.labri.fr/tima">
 	<xs:element name='timedautomata'>
 		<xs:complexType>
 			<xs:sequence>

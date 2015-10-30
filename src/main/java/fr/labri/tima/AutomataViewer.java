@@ -1,11 +1,11 @@
 package fr.labri.tima;
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
@@ -16,17 +16,26 @@ import fr.labri.tima.ITimedAutomata.Cursor;
 import fr.labri.tima.ITimedAutomata.Executor;
 import fr.labri.tima.ITimedAutomata.Predicate;
 import fr.labri.tima.ITimedAutomata.State;
+import org.apache.commons.collections15.Transformer;
 
 public class AutomataViewer {
 	private static final int GAP = 50;
 
-	public static JFrame viewAsFrame(ITimedAutomata<?> automata) {
+	private static JFrame createFrame(JComponent panel) {
 		JFrame frame = new JFrame("Simple Graph View");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().add(createPanel(automata));
+        frame.getContentPane().add(panel);
 		frame.pack();
 		frame.setVisible(true);
 		return frame;
+	}
+
+	public static JFrame viewAsFrame(ITimedAutomata<?> automata) {
+		return createFrame(createPanel(automata));
+	}
+
+	public static <C> JFrame viewAsFrame(Collection<? extends ITimedAutomata<C>> autos) {
+		return createFrame(createPanel(autos));
 	}
 
 	public static <C> VisualizationViewer<State<C>, Predicate<C>> createPanel(Executor<C> executor) {
@@ -56,41 +65,112 @@ public class AutomataViewer {
 		return createPanel(dimension, createGraph(autos));
 	}
 	
-	public static <C> VisualizationViewer<State<C>, Predicate<C>> createPanel(Dimension dimension, DirectedGraph<State<C>, Predicate<C>> g) {
+	public static <C> VisualizationViewer<State<C>, Predicate<C>> createPanel(Dimension dimension, AutomataGraph<C> g) {
 		Layout<State<C>, Predicate<C>> layout = new FRLayout<>(g, dimension);
 		VisualizationViewer<State<C>, Predicate<C>> vv = new VisualizationViewer<State<C>, Predicate<C>>(
 				layout);
 		vv.setAutoscrolls(true);
-		vv.setPreferredSize(new Dimension(dimension.width + GAP, dimension.height + GAP)); // Sets the viewing area
-														// size
-//		vv.getRenderContext().getPickedVertexState()
-//				.pick(auto.getInitialState(), true);
-//		for (Predicate<C> e : g.getEdges())
-//			if (e instanceof DefaultTransition)
-//				vv.getRenderContext().getPickedEdgeState().pick(e, true);
-		return vv;
+		vv.setPreferredSize(new Dimension(dimension.width + GAP, dimension.height + GAP)); // Sets the viewing area size
+
+        vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<State<C>, Paint>() {
+            @Override
+            public Paint transform(State<C> state) {
+                return g.getActiveStates().contains(state) ?  Color.GREEN :
+                        g.getInitialStates().contains(state) ? Color.YELLOW : Color.RED;
+            }
+        });
+        vv.getRenderContext().setVertexLabelTransformer(new Transformer<State<C>, String>() {
+            @Override
+            public String transform(State<C> state) {
+                return state.getName();
+            }
+        });
+
+        vv.getRenderContext().setEdgeLabelTransformer(new Transformer<Predicate<C>, String>() {
+            @Override
+            public String transform(Predicate<C> pred) {
+                return pred instanceof DefaultTransition ? null : pred.getType();
+            }
+        });
+
+        final Stroke plainLines = new BasicStroke(1.0f);
+        final Stroke dashedLines = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_MITER, 10.0f, new float[]{10.0f}, 0.0f);
+
+        vv.getRenderContext().setEdgeStrokeTransformer(new Transformer<Predicate<C>, Stroke>() {
+            @Override
+            public Stroke transform(Predicate<C> pred) {
+                return pred instanceof DefaultTransition ? dashedLines : plainLines;
+            }
+        });
+
+        return vv;
 	}
 
-	public static <C> DirectedGraph<State<C>, Predicate<C>> createGraph(Collection<? extends ITimedAutomata<C>> autos) {
-		DirectedSparseGraph<State<C>, Predicate<C>> graph = new DirectedSparseGraph<>();
+    interface AutomataGraph<C> extends DirectedGraph<State<C>, Predicate<C>> {
+        Collection<? extends ITimedAutomata<C>> getAutomatas();
+        Collection<? extends State<C>> getInitialStates();
+        Collection<? extends State<C>> getActiveStates();
+    }
+
+	public static <C> AutomataGraph<C> createGraph(final Collection<? extends ITimedAutomata<C>> autos) {
+
+        AutomataGraph<C> graph = new SimpleAutomataGraph<C>(autos);
+
 		for(ITimedAutomata<C> auto: autos)
 			createGraph(auto, graph);
 		return graph;
 	}
-	
-	public static <C> DirectedGraph<State<C>, Predicate<C>> createGraph(ITimedAutomata<C> autos[]) {
+
+	public static <C> AutomataGraph<C> createGraph(ITimedAutomata<C> autos[]) {
 		return createGraph(Arrays.asList(autos));
 	}
 
-	public static <C> DirectedGraph<State<C>, Predicate<C>> createGraph(ITimedAutomata<C> auto) {
-		DirectedSparseGraph<State<C>, Predicate<C>> graph = new DirectedSparseGraph<>();
-		createGraph(auto, graph);
+	public static <C> AutomataGraph<C> createGraph(ITimedAutomata<C> auto) {
+
+        AutomataGraph<C> graph = new SimpleAutomataGraph<C>(auto);
+        createGraph(auto, graph);
 		return graph;
 	}
+
+    private static class SimpleAutomataGraph<C> extends DirectedSparseGraph<State<C>, Predicate<C>> implements AutomataGraph<C> {
+        final ArrayList<ITimedAutomata<C>> autos = new ArrayList<>();
+        final ArrayList<State<C>> initialStates = new ArrayList<>();
+        final ArrayList<State<C>> activeStates = new ArrayList<>();
+
+        public SimpleAutomataGraph(ITimedAutomata<C> auto) {
+            autos.add(auto);
+            initialStates.add(auto.getInitialState());
+        }
+
+        public SimpleAutomataGraph(Collection<? extends ITimedAutomata<C>> autos) {
+            this.autos.addAll(autos);
+            for (ITimedAutomata<C> auto : autos) {
+                initialStates.add(auto.getInitialState());
+            }
+        }
+
+        @Override
+        public Collection<? extends ITimedAutomata<C>> getAutomatas() {
+            return autos;
+        }
+
+        @Override
+        public Collection<? extends State<C>> getInitialStates() {
+            return initialStates;
+        }
+
+        @Override
+        public Collection<? extends State<C>> getActiveStates() {
+            return activeStates;
+        }
+    }
 	
-	private static <C> DirectedGraph<State<C>, Predicate<C>> createGraph(ITimedAutomata<C> auto, DirectedGraph<State<C>, Predicate<C>> sgv) {
-		for (State<C> state : auto.getStates())
-			sgv.addVertex(state);
+	private static <C> AutomataGraph<C> createGraph(ITimedAutomata<C> auto, AutomataGraph<C> sgv) {
+		for (State<C> state : auto.getStates()) {
+            sgv.addVertex(state);
+        }
+
 		for (State<C> state : auto.getStates())
 			for (State<C> dst : auto.getFollowers(state)) {
 				final Predicate<C> pred = auto.getPredicate(state, dst);

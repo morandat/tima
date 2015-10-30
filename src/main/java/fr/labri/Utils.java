@@ -1,6 +1,10 @@
 package fr.labri;
 
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class Utils {
 	public static final void debug(Object recv, Object... strs) {
@@ -41,5 +45,17 @@ public class Utils {
 	            || needle == null && haystack[i] == null) return i;
 	    }
 	    return -1;
+	}
+
+	public static String readStream(InputStream stream) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+		StringBuilder out = new StringBuilder();
+		String newLine = System.getProperty("line.separator");
+		String line;
+		while ((line = reader.readLine()) != null) {
+			out.append(line);
+			out.append(newLine);
+		}
+		return out.toString();
 	}
 }

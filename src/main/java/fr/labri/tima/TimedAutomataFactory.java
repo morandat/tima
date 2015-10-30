@@ -322,7 +322,7 @@ public class TimedAutomataFactory<C> {
 			
 			if("true".equalsIgnoreCase(state.getAttributeValue(TimedAutomataFactory.STATE_INITIAL_TAG))) {
 				if(initial != null)
-					throw new RuntimeException("More than one initial state in " + root.getAttributeValue(AUTOMATA_NAME_TAG) + ": '"+initial+"', '"+state+"'");
+					throw new TimaException.InitialStateException("More than one initial state in " + root.getAttributeValue(AUTOMATA_NAME_TAG) + ": '"+initial+"', '"+state+"'");
 				initial = state;
 			}
 			
@@ -338,7 +338,7 @@ public class TimedAutomataFactory<C> {
 			}
 		}
 		if(initial == null)
-			throw new RuntimeException(root.getAttributeValue(AUTOMATA_NAME_TAG) + " automata has no initial state");
+			throw new TimaException.InitialStateException(root.getAttributeValue(AUTOMATA_NAME_TAG) + " automata has no initial state");
 		return initial;
 	}
 	

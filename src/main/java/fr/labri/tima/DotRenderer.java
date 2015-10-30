@@ -21,7 +21,7 @@ public class DotRenderer {
 		
 		b.append(drawGraph(auto, ""));
 
-		return b.append("};").toString();
+		return b.append("}\n").toString();
 	}
 
 
@@ -32,10 +32,10 @@ public class DotRenderer {
 		for(Cursor<C> cursor: exec.getCursors()) {
 			b.append("subgraph cluster_").append(Integer.toString(i)).append(" {\n");
 			b.append(drawGraph(cursor.getAutomata(), "_" + i ++));
-			b.append("}");
+			b.append("}\n");
 		}
 
-		return b.append("};").toString();
+		return b.append("}\n").toString();
 	}
 	
 	public static <C> String toDot(Collection<? extends ITimedAutomata<C>> autos, String name) {
@@ -45,10 +45,10 @@ public class DotRenderer {
 		for(ITimedAutomata<C> auto: autos) {
 			b.append("subgraph cluster_").append(Integer.toString(i)).append(" {\n");
 			b.append(drawGraph(auto, "_" + i ++));
-			b.append("}");
+			b.append("}\n");
 		}
 
-		return b.append("};").toString();
+		return b.append("}\n").toString();
 	}
 	
 	public static <C> String drawGraph(ITimedAutomata<C> auto, String offset) {
