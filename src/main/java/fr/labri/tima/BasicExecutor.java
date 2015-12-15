@@ -1,10 +1,6 @@
 package fr.labri.tima;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JList;
@@ -14,18 +10,25 @@ import fr.labri.tima.ITimedAutomata.Cursor;
 import fr.labri.tima.ITimedAutomata.Executor;
 
 public class BasicExecutor<C> implements Executor<C> {
-	List<Cursor<C>> _cursors = new LinkedList<>();
-	ContextProvider<C> _context;
+	final Collection<ITimedAutomata<C>> _automatas;
+ 	final Cursor<C> _cursors[];
+	final ContextProvider<C> _context;
+	int _alive;
 
 	TAViewer _viewer;
-	
-	public BasicExecutor(ContextProvider<C> context) {
+
+	public BasicExecutor(ContextProvider<C> context, Collection<ITimedAutomata<C>> automatas) {
 		_context = context;
+		_automatas = automatas;
+		_cursors = new Cursor[automatas.size()];
+		_alive = 0;
 	}
 	
 	@Override
-	public BasicExecutor<C> start(ITimedAutomata<C> auto, String key) {
-		_cursors.add(auto.start(_context, key));
+	public BasicExecutor<C> start() {
+		for (ITimedAutomata<C> automata : _automatas) {
+			_cursors[_alive ++] = automata.start(_context);
+		}
 		if(_viewer != null)
 			_viewer.update();
 		return this;
@@ -33,19 +36,23 @@ public class BasicExecutor<C> implements Executor<C> {
 
 	@Override
 	public boolean next() {
-		for(Iterator<Cursor<C>> it = _cursors.iterator(); it.hasNext() ;) {
-			Cursor<C> c = it.next();
-			if(c.next(this)) {
-				it.remove();
-				_viewer.update();
-			}
+		int alive = _alive;
+		for (int i = 0; i < _alive;) {
+			Cursor<C> cursor = _cursors[i];
+			if (cursor.next(_context)) {
+				_alive --;
+				_cursors[i] = _cursors[alive];
+			} else
+				i ++;
 		}
-		return !_cursors.isEmpty();
+		if (alive != _alive)
+			_viewer.update();
+		return _alive > 0;
 	}
 
 	@Override
 	public Collection<Cursor<C>> getCursors() {
-		return Collections.unmodifiableCollection(_cursors);
+		return Collections.unmodifiableCollection(Arrays.asList(_cursors)); // should trim to alive
 	}
 	
 	public JList<String> getViewer() {
@@ -55,8 +62,8 @@ public class BasicExecutor<C> implements Executor<C> {
 	
 	@SuppressWarnings("serial")
 	class TAViewer extends AbstractListModel<String> {
-        public int getSize() { return _cursors.size(); }
-        public String getElementAt(int i) { return _cursors.get(i).toString(); }
-        public void update() { fireContentsChanged(this, 0, _cursors.size() - 1); }
+        public int getSize() { return _alive; }
+        public String getElementAt(int i) { return _cursors[i].toString(); }
+        public void update() { fireContentsChanged(this, 0, _alive - 1); }
     }
 }

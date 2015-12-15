@@ -33,13 +33,13 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 	}
 	
 	@Override
-	public Cursor<C> start(final ContextProvider<C> context, final String key) {
+	public Cursor<C> start(final ContextProvider<C> context) {
 		return new Cursor<C>() {
 			int _current = _initial;
 			int _currentTimeout = _timeouts[_initial];
 
 			@Override
-			final public boolean next(Executor<C> executor) {
+			final public boolean next(ContextProvider<C> provider) {
 				boolean urgent = false, terminal = false; 
 				do {
 					int current = _current;
@@ -52,15 +52,15 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 						int[] trans = _transitionsPredicates[current];
 						int len = trans.length;
 						for(int i = 0; i < len; i ++)
-							if(_predicates[trans[i]].isValid(ctx, key)) {
+							if(_predicates[trans[i]].isValid(ctx)) {
 								target = _transitionsTarget[current][i];
 								break;
 							}
 					}
 					if(target == -1) {
-						_states[current].eachAction(ctx, executor, key);
+						_states[current].eachAction(ctx);
 					} else {
-						State<C> state = setState(target, executor, ctx);
+						State<C> state = setState(target, provider, ctx);
 						urgent = (state.getModifier() & URGENT) > 0;
 						terminal = (state.getModifier() & TERMINATE) > 0;
 					}
@@ -68,23 +68,18 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 				return terminal;
 			}
 
-			final private State<C> setState(int target, Executor<C> executor, C context) {
-				_states[_current].postAction(context, executor, key);
+			final private State<C> setState(int target, ContextProvider<C> provider, C context) {
+				_states[_current].postAction(context);
 				_current = target;
 				_currentTimeout = _timeouts[target];
 				State<C> newState = _states[target];
-				newState.preAction(context, executor, key);
+				newState.preAction(context);
 				return newState;
 			}
 
 			@Override
 			public ITimedAutomata<C> getAutomata() {
 				return CompiledTimedAutomata.this;
-			}
-
-			@Override
-			public String getKey() {
-				return key;
 			}
 		};
 	}

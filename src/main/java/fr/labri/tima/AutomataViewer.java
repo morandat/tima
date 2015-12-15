@@ -178,8 +178,8 @@ public class AutomataViewer {
 				if(timeout != TimedAutomata.TIMEOUT)
 					sgv.addEdge(new Predicate<C>() {
 						@Override
-						public boolean isValid(C context, String key) {
-							return pred.isValid(context, key);
+						public boolean isValid(C context) {
+							return pred.isValid(context);
 						}
 
 						@Override
@@ -200,8 +200,8 @@ public class AutomataViewer {
 			_pred = pred;
 		}
 		@Override
-		public boolean isValid(C context, String key) {
-			return _pred.isValid(context, key);
+		public boolean isValid(C context) {
+			return _pred.isValid(context);
 		}
 
 		@Override
@@ -209,5 +209,4 @@ public class AutomataViewer {
 			return _pred.getType();
 		}
 	}
-
 }

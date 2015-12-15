@@ -14,7 +14,6 @@
 			<xs:sequence>
 				<xs:element ref='path' minOccurs='0' maxOccurs='unbounded' />
 				<xs:element ref='timeout' minOccurs='0' maxOccurs='1' />
-				<xs:element ref='spawn' minOccurs='0' maxOccurs='unbounded' />
 				<xs:element ref='action' minOccurs='0' maxOccurs='unbounded' />
 				<xs:element ref='terminate' minOccurs='0' maxOccurs='1' />
 			</xs:sequence>
@@ -57,14 +56,6 @@
 	</xs:element>
 
 	<xs:element name='terminate' />
-
-	<xs:element name='spawn'>
-		<xs:complexType>
-			<xs:attribute name='name' type='xs:string' use='required' />
-			<xs:attribute name='type' type='xs:string' use='optional' />
-			<xs:attribute name='attr' type='xs:string' use='optional' />
-		</xs:complexType>
-	</xs:element>
 
 	<xs:element name='timeout'>
 		<xs:complexType>

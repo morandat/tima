@@ -4,92 +4,87 @@ import java.util.Collection;
 import java.util.List;
 
 public interface ITimedAutomata<C> {
-	public final static int INITIAL = 1 << 0;
-	public final static int URGENT = 1 << 1;
-	public final static int SPAWN = 1 << 2;
-	public final static int TERMINATE = 1 << 3;
+	int INITIAL = 1 << 0;
+	int URGENT = 1 << 1;
+	int TERMINATE = 1 << 2;
 
-	public State<C> getInitialState();
-	public void setInitialState(State<C> initial);
-	public State<C>[] getStates();
-	public State<C>[] getFollowers(State<C> src);
-	public int getTimeout(State<C> src, State<C> dst);
-	public Predicate<C> getPredicate(State<C> src, State<C> dst);
+	State<C> getInitialState();
+	void setInitialState(State<C> initial);
+	State<C>[] getStates();
+	State<C>[] getFollowers(State<C> src);
+	int getTimeout(State<C> src, State<C> dst);
+	Predicate<C> getPredicate(State<C> src, State<C> dst);
 
-	public ITimedAutomata<C> compile();
+	ITimedAutomata<C> compile();
 	
-	public Cursor<C> start(ContextProvider<C> context, String key);
+	Cursor<C> start(ContextProvider<C> context);
 
-	public interface NodeFactory<C> {
+	interface NodeFactory<C> {
 		Predicate<C> newPredicate(String type, String attr);
 		Action<C> newAction(String type, String attr);
-		Spawner<C> newSpawner(String type, String attr);
 	}
 
-	public interface Predicate<C> {
-		boolean isValid(C context, String key);
+	interface Predicate<C> {
+		boolean isValid(C context);
 		String getType();
 	}
 	
-	public interface Action<C> {
-		void preAction(C context, String key);
-		void eachAction(C context, String key);
-		void postAction(C context, String key);
+	interface Action<C> {
+		void preAction(C context);
+		void eachAction(C context);
+		void postAction(C context);
 		
 		String getType();
 	}
-	
-	public interface Spawner<C> {
-		String getType();
-		
-		String getSpawnerKey(C context, String parentKey);
-	}
-	
-	public interface State<C> {
+
+	interface State<C> {
 		String getName();
 		
 		List<Action<C>> getActions();
 		int getModifier();
 		
-		void preAction(C context, Executor<C> executor, String key);
-		void eachAction(C context, Executor<C> executor, String key);
-		void postAction(C context, Executor<C> executor, String key);
-
-		List<ITimedAutomata<C>> getSpawnableAutomatas();
+		void preAction(C context);
+		void eachAction(C context);
+		void postAction(C context);
 	}
 	
-	public interface Executor<C> {
-		Executor<C> start(ITimedAutomata<C> auto, String key);
+	interface Executor<C> {
+		/*
+			return this executor
+		 */
+		Executor<C> start();
 		boolean next();
 		
 		Collection<Cursor<C>> getCursors();
 	}
 	
-	public interface Cursor<C> {
-		boolean next(Executor<C> executor);
-		String getKey();
+	interface Cursor<C> {
+		/*
+			return true if this cursor is terminated
+		*/
+		boolean next(ContextProvider<C> provider);
 		ITimedAutomata<C> getAutomata();
 	}
 	
-	public interface ContextProvider<C> {
+	interface ContextProvider<C> {
 		C getContext();
 	}
 	
-	public class ActionAdapter<C> implements Action<C> {
+	class ActionAdapter<C> implements Action<C> {
 		public String getType() {
 			return getClass().getCanonicalName();
 		}
 
 		@Override
-		public void preAction(C context, String key) {
+		public void preAction(C context) {
 		}
 
 		@Override
-		public void eachAction(C context, String key) {
+		public void eachAction(C context) {
 		}
 
 		@Override
-		public void postAction(C context, String key) {
+		public void postAction(C context) {
 		}
 		
 		public String toString() {
@@ -97,8 +92,8 @@ public interface ITimedAutomata<C> {
 		}
 	}
 
-	public class PredicateAdapter<C> implements Predicate<C> {
-		public boolean isValid(C context, String key) {
+	class PredicateAdapter<C> implements Predicate<C> {
+		public boolean isValid(C context) {
 			return false;
 		}
 	
@@ -111,21 +106,4 @@ public interface ITimedAutomata<C> {
 			return getType();
 		}
 	}
-
-	public class SpawnAdapter<C> implements Spawner<C> {
-		@Override
-		public String getType() {
-			return getClass().getCanonicalName();
-		}
-
-		@Override
-		public String getSpawnerKey(C context, String parentKey) {
-			return null;
-		}
-		
-		public String toString() {
-			return getType();
-		}
-	}
 }
-

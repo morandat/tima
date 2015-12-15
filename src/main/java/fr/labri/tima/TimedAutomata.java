@@ -144,23 +144,18 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 				}
 
 				@Override
-				public void preAction(C context, Executor<C> executor, String key) {
-					state.preAction(context, executor, key);
+				public void preAction(C context) {
+					state.preAction(context);
 				}
 
 				@Override
-				public void eachAction(C context, Executor<C> executor, String key) {
-					state.eachAction(context, executor, key);
+				public void eachAction(C context) {
+					state.eachAction(context);
 				}
 
 				@Override
-				public void postAction(C context, Executor<C> executor, String key) {
-					state.postAction(context, executor, key);
-				}
-
-				@Override
-				public List<ITimedAutomata<C>> getSpawnableAutomatas() {
-					return state.getSpawnableAutomatas();
+				public void postAction(C context) {
+					state.postAction(context);
 				}
 			};
 		}
@@ -174,8 +169,8 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 		
 		private List<Next> nextStates (State<C> state) {
 			int m;
-			List<Transition> nexts =  new ArrayList<Transition>(_transitions.get(state));
-			List<Next> result = new ArrayList<Next>();
+			List<Transition> nexts =  new ArrayList<>(_transitions.get(state));
+			List<Next> result = new ArrayList<>();
 			int offset = 0;
 			while(true) {
 				m = nextDeadLine(nexts, offset);
@@ -263,7 +258,7 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 	}
 	
 	@Override
-	public Cursor<C> start(final ContextProvider<C> context, final String key) {
+	public Cursor<C> start(final ContextProvider<C> context) {
 		return new Cursor<C>() {
 			State<C> _current;
 			int _currentTime;
@@ -274,7 +269,7 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 			}
 			
 			@Override
-			final public boolean next(Executor<C> executor) {
+			final public boolean next(ContextProvider<C> provider) {
 				C ctx = context.getContext();
 
 				boolean allexpired = true;
@@ -285,33 +280,28 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 						timeoutTarget = trans.state;
 					else if (_currentTime < timeout || timeout == INFINITY) {
 						allexpired = false;
-						if(trans.predicate.isValid(ctx, key))
-							setState(trans.state, executor, ctx);
+						if(trans.predicate.isValid(ctx))
+							setState(trans.state, ctx);
 					}
 				}
 
 				_currentTime ++;
 				
 				if(allexpired && timeoutTarget != null)
-					setState(timeoutTarget,  executor, ctx);
+					setState(timeoutTarget, ctx);
 				
 				return (_current.getModifier() & TERMINATE) > 0;
 			}
 
-			final public void setState(State<C> target, Executor<C> executor, C context) {
+			final public void setState(State<C> target, C context) {
 				if(_current == target) {
-					target.eachAction(context, executor, key); // FIXME this is buggy ! (no self loop)
+					target.eachAction(context); // FIXME this is buggy ! (no self loop)
 				} else {
-					_current.postAction(context, executor, key);
+					_current.postAction(context);
 					_current = target;
 					_currentTime = 0;
-					_current.preAction(context, executor, key);
+					_current.preAction(context);
 				}
-			}
-
-			@Override
-			public String getKey() {
-				return key;
 			}
 		};
 	}
@@ -360,8 +350,8 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 	
 	class Next implements Iterable<Entry<State<C>, Predicate<C>>> {
 		final int deadline;
-		ArrayList<State<C>> states = new ArrayList<State<C>>();
-		ArrayList<Predicate<C>> trans = new ArrayList<Predicate<C>>();
+		ArrayList<State<C>> states = new ArrayList<>();
+		ArrayList<Predicate<C>> trans = new ArrayList<>();
 		
 		Next(int t) {
 			deadline = t;

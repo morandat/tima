@@ -13,8 +13,8 @@ import java.util.List;
 public class TestViewer {
     @Test
     public void testEx1() throws Exception {
-        InputStream ex1 = TestUtils.getInputStream("/ex1.xml");
-        List<TimedAutomata<Object>> autos = new TimedAutomataFactory<>(new SimpleNodeFactory<>()).loadXML(ex1, false);
+        InputStream ex1 = TestUtils.getInputStream("/msg1.xml");
+        List<ITimedAutomata<Object>> autos = new TimedAutomataFactory<>(new SimpleNodeFactory<>()).loadXML(ex1, false);
 
         JFrame frame = AutomataViewer.viewAsFrame(autos);
 

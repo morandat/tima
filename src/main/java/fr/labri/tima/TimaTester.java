@@ -10,7 +10,6 @@ import fr.labri.DotViewer;
 import fr.labri.tima.ITimedAutomata.Action;
 import fr.labri.tima.ITimedAutomata.NodeFactory;
 import fr.labri.tima.ITimedAutomata.Predicate;
-import fr.labri.tima.ITimedAutomata.Spawner;
 
 public class TimaTester {
 	final private AutoQualifiedClassLoader _classLoader;
@@ -35,7 +34,7 @@ public class TimaTester {
 
 	<C>void test(String name, String namespace, Class<C> dummy) throws JDOMException, IOException {
 		String fname = "/" + name.replaceAll("\\.", "/") + ".xml";
-		List<TimedAutomata<C>> b = new TimedAutomataFactory<>(getSimpleNodeBuilder(namespace, dummy)).loadXML(
+		List<ITimedAutomata<C>> b = new TimedAutomataFactory<>(getSimpleNodeBuilder(namespace, dummy)).loadXML(
 				getClass().getResourceAsStream(fname)
 		);
 		
@@ -59,12 +58,6 @@ public class TimaTester {
 			public Action<C> newAction(String type, String attr) {
 				if(factory.newAction(type, attr) == null) error(type); else ok(type);
 				return super.newAction(type, attr);
-			}
-
-			@Override
-			public Spawner<C> newSpawner(String type, String attr) {
-				if(factory.newSpawner(type, attr) == null) error(type); else ok(type);
-				return super.newSpawner(type, attr);
 			}
 
 			private void ok(String name) {
