@@ -13,7 +13,7 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref='path' minOccurs='0' maxOccurs='unbounded' />
-				<xs:element ref='timeout' minOccurs='0' maxOccurs='1' />
+				<xs:element ref='default' minOccurs='0' maxOccurs='1' />
 				<xs:element ref='action' minOccurs='0' maxOccurs='unbounded' />
 				<xs:element ref='terminate' minOccurs='0' maxOccurs='1' />
 			</xs:sequence>
@@ -57,7 +57,7 @@
 
 	<xs:element name='terminate' />
 
-	<xs:element name='timeout'>
+	<xs:element name='default'>
 		<xs:complexType>
 			<xs:attribute name='to' type='xs:string' use='required' />
 		</xs:complexType>

@@ -29,7 +29,7 @@ public class TimedAutomataFactory<C> {
 
 	public static final String STATE_TAG = "state";
 	public static final String TRANSITION_TAG = "path";
-	public static final String TIMEOUT_TAG = "timeout";
+	public static final String TIMEOUT_TAG = "default";
 	
 	public static final String STATE_URGENT_TAG = "urgent";
 	public static final String STATE_NAME_TAG = "name";
