@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -98,13 +99,9 @@ public class TimedAutomataFactory<C> {
 	}
 
 	public Executor<C> getExecutor(ContextProvider<C> provider, boolean compiled) {
-		List<ITimedAutomata<C>> masters = _masters;
-		if (compiled) {
-			masters = new ArrayList<>(_masters.size());
-			for (ITimedAutomata<C> master : _masters) {
-				_masters.add(master);
-			}
-		}
+		List<ITimedAutomata<C>> masters = compiled ?
+                masters = _masters.stream().map(m -> m.compile()).collect(Collectors.toList())
+                : _masters;
 		return new BasicExecutor<>(provider, masters).start();
 	}
 	

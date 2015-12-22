@@ -37,6 +37,9 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 		return new Cursor<C>() {
 			int _current = _initial;
 			int _currentTimeout = _timeouts[_initial];
+            int _lastPredicate;
+            int _lastState;
+
 
 			@Override
 			final public boolean next(ContextProvider<C> provider) {
@@ -53,6 +56,8 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 						int len = trans.length;
 						for(int i = 0; i < len; i ++)
 							if(_predicates[trans[i]].isValid(ctx)) {
+                                _lastPredicate = i;
+                                _lastState = current;
 								target = _transitionsTarget[current][i];
 								break;
 							}
@@ -68,7 +73,12 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 				return terminal;
 			}
 
-			final private State<C> setState(int target, ContextProvider<C> provider, C context) {
+            @Override
+            public Predicate<C> getLastValidPredicate() {
+                return _predicates[_transitionsPredicates[_lastState][_lastPredicate]];
+            }
+
+            final private State<C> setState(int target, ContextProvider<C> provider, C context) {
 				_states[_current].postAction(context);
 				_current = target;
 				_currentTimeout = _timeouts[target];

@@ -63,6 +63,8 @@ public interface ITimedAutomata<C> {
 			return true if this cursor is terminated
 		*/
 		boolean next(ContextProvider<C> provider);
+
+		Predicate<C> getLastValidPredicate();
 		ITimedAutomata<C> getAutomata();
 	}
 	

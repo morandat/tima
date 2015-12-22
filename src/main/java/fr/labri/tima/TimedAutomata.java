@@ -260,9 +260,10 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 	@Override
 	public Cursor<C> start(final ContextProvider<C> context) {
 		return new Cursor<C>() {
-			State<C> _current;
-			int _currentTime;
-			
+            State<C> _current;
+            int _currentTime;
+            Predicate<C> _lastValidPredicate;
+
 			@Override
 			public ITimedAutomata<C> getAutomata() {
 				return TimedAutomata.this;
@@ -280,8 +281,10 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 						timeoutTarget = trans.state;
 					else if (_currentTime < timeout || timeout == INFINITY) {
 						allexpired = false;
-						if(trans.predicate.isValid(ctx))
-							setState(trans.state, ctx);
+						if(trans.predicate.isValid(ctx)) {
+							_lastValidPredicate = trans.predicate;
+                            setState(trans.state, ctx);
+						}
 					}
 				}
 
@@ -293,7 +296,12 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 				return (_current.getModifier() & TERMINATE) > 0;
 			}
 
-			final public void setState(State<C> target, C context) {
+            @Override
+            public Predicate<C> getLastValidPredicate() {
+                return _lastValidPredicate;
+            }
+
+            final public void setState(State<C> target, C context) {
 				if(_current == target) {
 					target.eachAction(context); // FIXME this is buggy ! (no self loop)
 				} else {
