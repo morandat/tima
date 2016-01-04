@@ -89,7 +89,7 @@ public class TimedAutomataFactory<C> {
 		
 		List<ITimedAutomata<C>> res = new ArrayList<>();
 		res.addAll(autos.values());
-		_masters.add(autos.get(root.getRootElement()));
+		_masters.addAll(autos.values());
 		
 		return res;
 	}
@@ -99,9 +99,9 @@ public class TimedAutomataFactory<C> {
 	}
 
 	public Executor<C> getExecutor(ContextProvider<C> provider, boolean compiled) {
-		List<ITimedAutomata<C>> masters = compiled ?
-                masters = _masters.stream().map(m -> m.compile()).collect(Collectors.toList())
-                : _masters;
+		List<ITimedAutomata<C>> masters = compiled
+            ? _masters.stream().map(m -> m.compile()).collect(Collectors.toList())
+            : _masters;
 		return new BasicExecutor<>(provider, masters).start();
 	}
 	
@@ -123,9 +123,9 @@ public class TimedAutomataFactory<C> {
 
 	protected ITimedAutomata<C> loadAutomata(Element auto, Map<String, Element> autosMap, Map<Element, TimedAutomata<C>> autos) throws JDOMException, IOException {
 		
-		Map<String, Element> stateMap = new HashMap<String, Element>();
+		Map<String, Element> stateMap = new HashMap<>();
 		resolveStates(auto, autosMap, stateMap);
-		Map<Element, Element> transMap = new HashMap<Element, Element>();
+		Map<Element, Element> transMap = new HashMap<>();
 		resolveTransitions(auto, stateMap, transMap);
 		
 		TimedAutomata<C> cAuto = autos.get(auto);
@@ -331,48 +331,5 @@ public class TimedAutomataFactory<C> {
 		return ("true".equalsIgnoreCase(state.getAttributeValue(TimedAutomataFactory.STATE_URGENT_TAG)) ? ITimedAutomata.URGENT : 0)
 				| ("true".equalsIgnoreCase(state.getAttributeValue(TimedAutomataFactory.STATE_INITIAL_TAG)) ? ITimedAutomata.INITIAL : 0)
 				| (("stop".equalsIgnoreCase(name) || "terminate".equalsIgnoreCase(name)) ? ITimedAutomata.TERMINATE : 0);
-	}
-	
-	public static <C> NodeFactory<C> getReflectNodeBuilder(final Class<C> dummy) {
-		return getReflectNodeBuilder(TimedAutomata.class.getClassLoader(), dummy);
-	}
-	
-	public static <C> NodeFactory<C> getReflectNodeBuilder(final String searchPrefix, final Class<C> dummy) {
-		return getReflectNodeBuilder(new AutoQualifiedClassLoader(searchPrefix), dummy);
-	}
-	
-	public static <C> NodeFactory<C> getReflectNodeBuilder(final ClassLoader loader, final Class<C> dummy) {
-		return new NodeFactory<C>() {
-			@Override
-			public Action<C> newAction(String type, String attr) {
-				return newInstance(type, attr);
-			}
-			
-			@Override
-			public Predicate<C> newPredicate(String type, String attr) {
-				return newInstance(type, attr);
-			}
-			
-			@SuppressWarnings("unchecked")
-			public <T> T newInstance(String type, String attr) {
-				try {
-					Class<?> clz = loader.loadClass(type);
-					T state = null;
-					if(type == null)
-						return null;
-					try {
-						state = (T) clz.getConstructor(String.class).newInstance(attr);
-					} catch (NoSuchMethodException e) {
-						state = (T) clz.getConstructor().newInstance();
-					}
-					return state;
-				} catch (NoSuchMethodException | SecurityException
-						| ClassNotFoundException | InstantiationException
-						| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-//					e.printStackTrace();
-				}
-				return null;
-			}
-		};
 	}
 }

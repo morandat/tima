@@ -1,12 +1,12 @@
 package fr.labri.tima;
 
+import fr.labri.Pair;
 import fr.labri.tima.ITimedAutomata.*;
 import fr.labri.tima.MessagingNodeFactory.MessageExecutor;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSearchableLinkedDeque;
+import java.util.function.Function;
 
 public class MessagingNodeFactory<C> implements ITimedAutomata.NodeFactory<MessageExecutor<C>.MessageContext> {
     final NodeFactory<C> _factory;
@@ -67,10 +67,10 @@ public class MessagingNodeFactory<C> implements ITimedAutomata.NodeFactory<Messa
     }
 
     private Action<MessageExecutor<C>.MessageContext> sendMessageFactory(String type, String attr) {
-        return new SendMessage("someautomata", "hello");
+        return new SendMessage("someautomata", new Message("hello"));
     }
 
-    class MessageFilter implements ITimedAutomata.Predicate<MessageExecutor<C>.MessageContext>{
+    class MessageFilter extends ITimedAutomata.PredicateAdapter<MessageExecutor<C>.MessageContext>{
         @Override
         public boolean isValid(MessageExecutor<C>.MessageContext context) {
             return context.select(new MessagePattern() {
@@ -80,21 +80,35 @@ public class MessagingNodeFactory<C> implements ITimedAutomata.NodeFactory<Messa
                 }
             });
         }
-
-        @Override
-        public String getType() {
-            return null;
-        }
     }
 
-    class SendMessage implements ITimedAutomata.Action<MessageExecutor<C>.MessageContext> {
-        private final String _message;
+    class SendMessage extends ITimedAutomata.ActionAdapter<MessageExecutor<C>.MessageContext> {
+        private final Message _prototype;
         final String _automaton;
         int address;
 
-        public SendMessage(String to, String msg) {
+        final Pair<String, Function<Integer, Integer>> _transformations[];
+
+        public SendMessage(String to, Message prototype) {
             _automaton = to;
-            _message = msg;
+            _prototype = prototype;
+            _transformations = null;
+        }
+
+        public SendMessage(String to, Message prototype, Pair<String, Function<Integer, Integer>>... transformations) {
+            _automaton = to;
+            _prototype = prototype;
+            _transformations = transformations;
+        }
+
+        public SendMessage(String to, Message prototype, Map<String, Function<Integer, Integer>> transformations) {
+            _automaton = to;
+            _prototype = prototype;
+            _transformations = new Pair[transformations.size()];
+            int i = 0;
+            for (Map.Entry<String, Function<Integer, Integer>> trans : transformations.entrySet()) {
+                _transformations[i++] = Pair.of(trans.getKey(), trans.getValue());
+            }
         }
 
         int resolveAddress(MessageExecutor<C>.MessageContext context) {
@@ -102,20 +116,16 @@ public class MessagingNodeFactory<C> implements ITimedAutomata.NodeFactory<Messa
                 address = 1;
             return address;
         }
+
         @Override
         public void preAction(MessageExecutor<C>.MessageContext context) {
-            context.sendMessage(resolveAddress(context), new Message(_message));
-        }
-
-        @Override
-        public void eachAction(MessageExecutor<C>.MessageContext context) { }
-
-        @Override
-        public void postAction(MessageExecutor<C>.MessageContext context) { }
-
-        @Override
-        public String getType() {
-            return null;
+            Message m = new Message(_prototype);
+            Message other = context.currentMessage();
+            for (int i = 0; i < _transformations.length; i++) {
+                Pair<String, Function<Integer, Integer>> transformation = _transformations[i];
+                m.merge(other, transformation.snd, transformation.fst);
+            }
+            context.sendMessage(resolveAddress(context), m);
         }
     }
 
@@ -192,15 +202,19 @@ public class MessagingNodeFactory<C> implements ITimedAutomata.NodeFactory<Messa
             }
 
             public void sendMessage(int address, Message msg) {
-                mailbox().receive(msg);
+                _mailboxes[address].receive(msg);
             }
 
             public Message currentMessage() {
                 return _currentMessage;
             }
 
-            public boolean select(MessagePattern pattern) {
-                Message m = mailbox().extractFrom(pattern);
+            final public boolean select(MessagePattern pattern) {
+                return select(pattern, false);
+            }
+
+            public boolean select(MessagePattern pattern, boolean first) {
+                Message m = mailbox().extractFrom(pattern, first);
                 if (m == null)
                     return false;
                 _currentMessage = m;
@@ -215,8 +229,65 @@ public class MessagingNodeFactory<C> implements ITimedAutomata.NodeFactory<Messa
 
     static class Message {
         final String _type;
+        final Map<String, Integer> _data;
+
         Message(String type) {
+            this(type, new HashMap<>());
+        }
+
+        Message(Message other) {
+            this(other._type, other);
+        }
+
+        Message(String type, Message other) {
+            this(type, new HashMap<>(other.data()));
+        }
+
+        private Message(String type, Map<String, Integer> data) {
             _type = type.intern();
+            _data = data;
+        }
+
+        public Integer get(String key) {
+            return _data.get(key);
+        }
+
+        public Map<String, Integer> data() {
+            return Collections.unmodifiableMap(_data);
+        }
+
+        public Message merge(Message other, Function<Integer, Integer> transform, String key) {
+            _data.put(key, transform.apply(other.get(key)));
+            return this;
+        }
+
+        public Message merge(Message other, Function<Integer, Integer> transform, String... keys) {
+            for (String key: keys) {
+                _data.put(key, transform.apply(other.get(key)));
+            }
+            return this;
+        }
+
+        static class Factory {
+            Message newSimpleMessage(String type, Map.Entry<String, Integer>... values) {
+                HashMap data = new HashMap();
+                for (Map.Entry<String, Integer> value: values) {
+                    data.put(value.getKey(), value.getValue());
+                }
+                return new Message(type, data);
+            }
+        }
+    }
+
+    static class Mailbox {
+        ConcurrentSearchableLinkedDeque<Message> queue = new ConcurrentSearchableLinkedDeque<>();
+
+        public void receive(Message msg) {
+            queue.addLast(msg);
+        }
+
+        public Message extractFrom(MessagePattern pattern, boolean first) {
+            return first ? queue.removeFirstIf(pattern) : queue.removeFirstMatching(pattern);
         }
     }
 
@@ -229,18 +300,6 @@ public class MessagingNodeFactory<C> implements ITimedAutomata.NodeFactory<Messa
             if (other == null)
                 return false;
             return match(other);
-        }
-    }
-
-    static class Mailbox {
-        ConcurrentSearchableLinkedDeque<Message> queue = new ConcurrentSearchableLinkedDeque<>();
-
-        public void receive(Message msg) {
-            queue.addLast(msg);
-        }
-
-        public Message extractFrom(MessagePattern pattern) {
-            return queue.removeFirst(pattern);
         }
     }
 }

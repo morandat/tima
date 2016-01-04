@@ -47,7 +47,7 @@ public class TimaTester {
 	}
 	
 	<C> NodeFactory<C> getSimpleNodeBuilder(final String namespace, Class<C> dummy) {
-		final NodeFactory<C> factory = TimedAutomataFactory.getReflectNodeBuilder(new AutoQualifiedClassLoader(namespace, _classLoader), dummy);
+		final NodeFactory<C> factory = new ReflectNodeFactory<>(new AutoQualifiedClassLoader(namespace, _classLoader));
 		return new SimpleNodeFactory<C>() {
 			public Predicate<C> newPredicate(String type, String attr) {
 				if(factory.newPredicate(type, attr) == null) error(type);  else ok(type);

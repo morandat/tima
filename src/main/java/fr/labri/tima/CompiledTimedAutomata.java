@@ -25,7 +25,7 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 		
 		int l = states.length ;
 		if(l != transitionsPredicates.length || l != timeouts.length || l != transitionsTarget.length || l != timeoutsTarget.length)
-			throw new RuntimeException("Automata is not well formed !");
+			throw new RuntimeException("Automaton is not well formed !");
 	}
 	
 	public CompiledTimedAutomata(State<C>[] states, Predicate<C>[] predicates, Action<C> initial, int[][] transitionsPredicates, int[] timeouts, int[][] transitionsTarget, int[] timeoutsTarget) {
