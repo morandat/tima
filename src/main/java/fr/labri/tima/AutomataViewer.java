@@ -72,37 +72,17 @@ public class AutomataViewer {
 		vv.setAutoscrolls(true);
 		vv.setPreferredSize(new Dimension(dimension.width + GAP, dimension.height + GAP)); // Sets the viewing area size
 
-        vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<State<C>, Paint>() {
-            @Override
-            public Paint transform(State<C> state) {
-                return g.getActiveStates().contains(state) ?  Color.GREEN :
-                        g.getInitialStates().contains(state) ? Color.YELLOW : Color.RED;
-            }
-        });
-        vv.getRenderContext().setVertexLabelTransformer(new Transformer<State<C>, String>() {
-            @Override
-            public String transform(State<C> state) {
-                return state.getName();
-            }
-        });
+        vv.getRenderContext().setVertexFillPaintTransformer(state -> g.getActiveStates().contains(state) ?  Color.GREEN :
+                g.getInitialStates().contains(state) ? Color.YELLOW : Color.RED);
+        vv.getRenderContext().setVertexLabelTransformer(state -> state.getName());
 
-        vv.getRenderContext().setEdgeLabelTransformer(new Transformer<Predicate<C>, String>() {
-            @Override
-            public String transform(Predicate<C> pred) {
-                return pred instanceof DefaultTransition ? null : pred.getType();
-            }
-        });
+        vv.getRenderContext().setEdgeLabelTransformer(pred -> pred instanceof DefaultTransition ? null : pred.getType());
 
         final Stroke plainLines = new BasicStroke(1.0f);
         final Stroke dashedLines = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
                 BasicStroke.JOIN_MITER, 10.0f, new float[]{10.0f}, 0.0f);
 
-        vv.getRenderContext().setEdgeStrokeTransformer(new Transformer<Predicate<C>, Stroke>() {
-            @Override
-            public Stroke transform(Predicate<C> pred) {
-                return pred instanceof DefaultTransition ? dashedLines : plainLines;
-            }
-        });
+        vv.getRenderContext().setEdgeStrokeTransformer(pred -> pred instanceof DefaultTransition ? dashedLines : plainLines);
 
         return vv;
 	}
