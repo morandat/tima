@@ -131,22 +131,23 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 	@Override
 	public int getTimeout(State<C> src, State<C> dst) {
 		int idSrc = Utils.indexOf(src, _states);
-		int idDst = Utils.indexOf(src, _states);
+		int idDst = Utils.indexOf(dst, _states);
 
 		if(_timeoutsTarget[idSrc] == idDst)
 			return TimedAutomata.TIMEOUT;
 		else
-			return _timeoutsTarget[idSrc];
+			return _timeouts[idSrc];
 	}
 
 	@Override
 	public Predicate<C> getPredicate(State<C> src, State<C> dst) {
 		int idSrc = Utils.indexOf(src, _states);
-		int idDst = Utils.indexOf(src, _states);
+		int idDst = Utils.indexOf(dst, _states);
 		int[] line = _transitionsTarget[idSrc];
 		for(int i = 0; i < line.length; i ++)
 			if(line[i] == idDst)
 				return _predicates[_transitionsPredicates[idSrc][i]];
+		
 		return null;
 	}
 	
