@@ -138,6 +138,16 @@ public class CompiledTimedAutomata<C> implements ITimedAutomata<C> {
 		else
 			return _timeouts[idSrc];
 	}
+	
+	/**
+	 * In a compiled automata, every states must have a single timeout transition and non-timeout transitions must have the same expiration value.
+	 * In other words, the timeout belongs now to the node  
+	 * @return
+	 */
+	public int getStateTimeOut(State<C> s) {
+		int idSrc = Utils.indexOf(s, _states);
+		return _timeouts[idSrc];
+	}
 
 	@Override
 	public Predicate<C> getPredicate(State<C> src, State<C> dst) {
