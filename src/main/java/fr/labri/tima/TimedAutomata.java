@@ -31,7 +31,7 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 		addTransition(from, INFINITY, pred, to);
 	}
 	
-	void addTransition(State<C> from, int timeout, Predicate<C> pred, State<C> to) {
+	public void addTransition(State<C> from, int timeout, Predicate<C> pred, State<C> to) {
 		List<Transition> t = _transitions.get(from);
 		if(t == null) {
 			t = new ArrayList<Transition>();
@@ -94,7 +94,9 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 					addTransitions(node, next);
 					if(i < (size-1)) {
 						State<C> state = e.getKey();
-						node = addTimeout(node, newState(state, "_" + next.deadline + "_" + i), next.deadline);
+						State<C> newState = newState(state, "_" + next.deadline + "_" + i); 
+//						System.out.printf("Timeout %d from %s to %s\n", next.deadline, node, newState);
+						node = addTimeout(node, newState, next.deadline);
 					}
 				}
 				
@@ -129,7 +131,11 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 
 				@Override
 				public int getModifier() {
-					return state.getModifier();
+					// AFAIK, a single initial state per State Machine 
+					int m = state.getModifier();
+					if ((m & INITIAL) != 0)
+						m -= INITIAL;
+					return m;
 				}
 
 				@Override
@@ -145,6 +151,11 @@ public class TimedAutomata<C> implements ITimedAutomata<C> {
 				@Override
 				public void postAction(C context) {
 					state.postAction(context);
+				}
+				
+				@Override
+				public String toString() {
+					return getName();
 				}
 			};
 		}
