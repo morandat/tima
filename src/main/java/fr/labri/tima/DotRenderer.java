@@ -55,16 +55,22 @@ public class DotRenderer {
         StringBuilder b = new StringBuilder();
         State<C>[] states = auto.getStates();
 
+        boolean requireAdditionalDecoration = auto instanceof CompiledTimedAutomata<?>;
+        
         for (State<C> state : states) {
-            b.append(getNodeID(state, states, offset)).append(" [").append(getStateDecoration(state)).append("];\n");
+        	String additionalDecoration = "";
+        	if (requireAdditionalDecoration) {
+        		additionalDecoration += ((CompiledTimedAutomata<C>)auto).getStateTimeOut(state);
+        	}
+            b.append(getNodeID(state, states, offset)).append(" [").append(getStateDecoration(state, requireAdditionalDecoration, additionalDecoration)).append("];\n");
             for (State<C> dst : auto.getFollowers(state))
                 if (dst != null)
-                    b.append(getNodeID(state, states, offset)).append(" -> ").append(getNodeID(dst, states, offset)).append(" [").append(getTransitionDecoration(auto, state, dst)).append("];\n");
+                    b.append(getNodeID(state, states, offset)).append(" -> ").append(getNodeID(dst, states, offset)).append(" [").append(getTransitionDecoration(auto, state, dst, !requireAdditionalDecoration)).append("];\n");
         }
         return b.toString();
     }
 
-    private static <C> String getTransitionDecoration(ITimedAutomata<C> auto, State<C> src, State<C> dst) {
+    private static <C> String getTransitionDecoration(ITimedAutomata<C> auto, State<C> src, State<C> dst, boolean requireAdditionalDecoration) {
         StringBuilder b = new StringBuilder();
         int timeout = auto.getTimeout(src, dst);
         Predicate<C> pred = auto.getPredicate(src, dst);
@@ -75,7 +81,7 @@ public class DotRenderer {
             sep = ", ";
         }
 
-        if (timeout != TimedAutomata.TIMEOUT) {
+        if (requireAdditionalDecoration && timeout != TimedAutomata.TIMEOUT) {
             b.append(sep).append("taillabel=\"").append(timeout == TimedAutomata.INFINITY ? INFINITY_SYMBOL : Integer.toString(timeout)).append("\"");
             sep = ", ";
         }
@@ -95,9 +101,9 @@ public class DotRenderer {
 //		return (name == null) ? getNodeID(state) : name;
 //	}
 
-    public static <C> String getStateDecoration(State<C> state) {
+    public static <C> String getStateDecoration(State<C> state, boolean requireAdditionDecoration, String additionalDecoration) {
         StringBuilder b = new StringBuilder();
-        b.append("shape=\"record\", label=\"{").append(state.getName()).append("|{");
+        b.append("shape=\"record\", label=\"{").append(state.getName()).append((requireAdditionDecoration)? String.format("|%s|{", additionalDecoration) :"|{");
         String sep = "";
         for (Action<C> a : state.getActions()) {
             b.append(sep).append(a.getType());
